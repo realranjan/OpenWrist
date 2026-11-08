@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "watchgesture"
 version = "1.0.0"
-description = "Smartwatch BLE wrist-gesture controller for desktop media navigation"
+description = "Turn budget smartwatches into hands-free desktop air-mice for Reels/Shorts and remote satellite GPS trackers"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
@@ -21,6 +21,9 @@ keywords = [
     "fire-boltt",
     "dafit",
     "realtek",
+    "gps",
+    "telemetry",
+    "reverse-engineering",
     "automation",
     "pyautogui"
 ]

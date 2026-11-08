@@ -9,7 +9,7 @@
   <a href="#requirements"><img src="https://img.shields.io/badge/Python-3.9%2B-38bdf8?style=flat-square&logo=python&logoColor=white" alt="Python Version" /></a>
   <a href="#architecture"><img src="https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-818cf8?style=flat-square&logo=windows&logoColor=white" alt="Platform" /></a>
   <a href="#protocol"><img src="https://img.shields.io/badge/Protocol-DaFit%20%2F%20Fire--Boltt%20V2-c084fc?style=flat-square" alt="Protocol" /></a>
-  <a href="#testing"><img src="https://img.shields.io/badge/Tests-36%2F36%20Passing-34d399?style=flat-square" alt="Tests" /></a>
+  <a href="#testing"><img src="https://img.shields.io/badge/Tests-37%2F37%20Passing-34d399?style=flat-square" alt="Tests" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="License" /></a>
 </p>
 
