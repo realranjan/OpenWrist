@@ -136,3 +136,4 @@ Type a message in the desktop HUD or run:
 python run.py telemetry-send -m "Dinner is ready!"
 ```
 *The watch will buzz and show "PC: Dinner is ready!" on its display.*
+
