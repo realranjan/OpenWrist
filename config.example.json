@@ -1,0 +1,13 @@
+{
+  "watch_mac": "CE:E6:79:A9:BE:3B",
+  "device_name": "Fire-Boltt 184",
+  "active_profile": "reels",
+  "fast_rearm": false,
+  "timing": {
+    "gesture_window_sec": 1.0,
+    "min_gap_sec": 0.28,
+    "lockout_duration_sec": 0.4,
+    "keepalive_interval_sec": 6.0
+  },
+  "custom_profiles": {}
+}

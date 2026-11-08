@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "watchgesture"
+version = "1.0.0"
+description = "Smartwatch BLE wrist-gesture controller for desktop media navigation"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "WatchGesture Contributors" }
+]
+keywords = [
+    "bluetooth",
+    "ble",
+    "smartwatch",
+    "gestures",
+    "accelerometer",
+    "fire-boltt",
+    "dafit",
+    "moyoung",
+    "automation",
+    "pyautogui"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia",
+    "Topic :: System :: Hardware"
+]
+dependencies = [
+    "bleak>=0.21.0",
+    "pyautogui>=0.9.54"
+]
+
+[project.scripts]
+watchgesture = "watchgesture.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

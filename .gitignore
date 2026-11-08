@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# References & Working State
+moyoung-watch/
+scratch/
+config.json
+!config.example.json
+*.pcap
+*.cap
+
+# Build & Distribution
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
