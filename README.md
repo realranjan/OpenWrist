@@ -15,9 +15,9 @@
 
 ---
 
-**OpenWrist** (formerly WatchGesture) is an open-source, production-grade smartwatch reverse-engineering toolkit and automation suite for consumer Bluetooth Low Energy (BLE) smartwatches (Fire-Boltt, DaFit, Colmi, Zeblaze, and Realtek RTL8762 chipset variants).
+**OpenWrist** (formerly WatchGesture) is an open-source, production-grade smartwatch reverse-engineering toolkit and automation suite for consumer Bluetooth Low Energy (BLE) smartwatches (Fire-Boltt, Noise, BoAt, DaFit, Colmi, Zeblaze, and Realtek RTL8762 chipset variants).
 
-It turns sub-\$50 smartwatches into **hands-free desktop wrist gesture controllers** and **live satellite GPS & biometric tracking beacons** with zero mobile app installs and zero hardware dongles.
+It turns ₹2,000–₹3,000 (~$30) smartwatches into **hands-free desktop wrist gesture controllers** (YouTube Shorts, Instagram Reels) and **live satellite GPS & biometric tracking beacons** with zero mobile app installs and zero hardware dongles.
 
 ---
 
