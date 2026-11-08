@@ -77,8 +77,8 @@ Telemetry uses standard HTTP pub/sub relays (`ntfy.sh` or any self-hosted MQTT/S
 - **Payload Schema:**
   ```json
   {
-    "lat": 15.369620,
-    "lon": 75.132854,
+    "lat": 37.774929,
+    "lon": -122.419416,
     "acc": 5.0,
     "bpm": 78,
     "steps": 4210,

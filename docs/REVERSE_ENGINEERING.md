@@ -159,7 +159,7 @@ Once candidate opcodes are identified in Wireshark, you can test and confirm the
 WatchGesture includes a built-in sniffer:
 
 ```powershell
-python run.py sniff --mac "CE:E6:79:A9:BE:3B"
+python run.py sniff --mac "AA:BB:CC:DD:EE:FF"
 ```
 
 ### Custom Interactive Probing Script
@@ -170,7 +170,7 @@ You can run this minimal script in a scratch file to send custom commands and ob
 import asyncio
 from bleak import BleakClient
 
-WATCH_MAC = "CE:E6:79:A9:BE:3B"
+WATCH_MAC = "AA:BB:CC:DD:EE:FF"
 FEE2_WRITE = "0000fee2-0000-1000-8000-00805f9b34fb"
 
 def make_packet(cmd: int, payload: bytes = b"") -> bytes:

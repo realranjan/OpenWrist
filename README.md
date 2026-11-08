@@ -124,13 +124,13 @@ Scanning for 6.0 seconds... Make sure watch screen is awake!
 
 DEVICE NAME                    MAC ADDRESS          RSSI       STATUS
 ----------------------------------------------------------------------
-FireBoltt 184                  CE:E6:79:A9:BE:3B    -31 dBm    ✅ SMARTWATCH
+FireBoltt 184                  AA:BB:CC:DD:EE:FF    -31 dBm    ✅ SMARTWATCH
 ----------------------------------------------------------------------
 ```
 
 ### 3. Verify Connection with a Vibration Buzz
 ```powershell
-python run.py buzz --mac "CE:E6:79:A9:BE:3B"
+python run.py buzz --mac "AA:BB:CC:DD:EE:FF"
 ```
 *Your watch will vibrate immediately.*
 

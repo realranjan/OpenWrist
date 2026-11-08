@@ -19,7 +19,7 @@ from watchgesture.profiles.default_profiles import BUILTIN_PROFILES
 class TestConfig(unittest.TestCase):
     def test_default_config_values(self):
         config = AppConfig()
-        self.assertEqual(config.watch_mac, "CE:E6:79:A9:BE:3B")
+        self.assertEqual(config.watch_mac, "AA:BB:CC:DD:EE:FF")
         self.assertEqual(config.active_profile, "reels")
         self.assertEqual(config.timing.gesture_window_sec, 1.00)
         self.assertEqual(config.timing.min_gap_sec, 0.28)

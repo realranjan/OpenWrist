@@ -33,7 +33,7 @@ class TimingConfig:
 @dataclass
 class AppConfig:
     """Master application configuration."""
-    watch_mac: str = "CE:E6:79:A9:BE:3B"
+    watch_mac: str = "AA:BB:CC:DD:EE:FF"
     device_name: str = "Fire-Boltt 184"
     active_profile: str = "reels"
     fast_rearm: bool = False
@@ -74,7 +74,7 @@ class AppConfig:
             )
 
             return cls(
-                watch_mac=str(data.get("watch_mac", "CE:E6:79:A9:BE:3B")),
+                watch_mac=str(data.get("watch_mac", "AA:BB:CC:DD:EE:FF")),
                 device_name=str(data.get("device_name", "Fire-Boltt 184")),
                 active_profile=str(data.get("active_profile", "reels")),
                 fast_rearm=bool(data.get("fast_rearm", False)),

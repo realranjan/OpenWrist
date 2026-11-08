@@ -20,8 +20,8 @@ class TestTelemetryModels(unittest.TestCase):
 
     def test_point_serialization(self) -> None:
         point = TelemetryPoint(
-            lat=15.369620,
-            lon=75.132854,
+            lat=37.774929,
+            lon=-122.419416,
             accuracy_m=7.5,
             bpm=76,
             steps=3420,
@@ -29,14 +29,14 @@ class TestTelemetryModels(unittest.TestCase):
             sos=False,
         )
         d = point.to_dict()
-        self.assertEqual(d["lat"], 15.36962)
-        self.assertEqual(d["lon"], 75.132854)
+        self.assertEqual(d["lat"], 37.774929)
+        self.assertEqual(d["lon"], -122.419416)
         self.assertEqual(d["acc"], 7.5)
         self.assertEqual(d["bpm"], 76)
         self.assertEqual(d["steps"], 3420)
         self.assertEqual(d["msg"], "Test Lock")
         self.assertFalse(d["sos"])
-        self.assertIn("15.369620,75.132854", point.maps_url)
+        self.assertIn("37.774929,-122.419416", point.maps_url)
 
     def test_point_from_json_valid(self) -> None:
         payload = json.dumps({
