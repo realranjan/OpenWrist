@@ -243,17 +243,19 @@ python run.py scan
 The `watchgesture` command-line interface provides comprehensive tools for scanning, testing, and running controllers:
 
 ```
-usage: watchgesture [-h] {run,scan,sniff,buzz,simulate,snoop-extract,profiles,gui} ...
+usage: watchgesture [-h] {run,scan,sniff,buzz,simulate,snoop-extract,profiles,gui,telemetry,telemetry-send} ...
 
 Subcommands:
-  run            Run the background gesture controller daemon
-  scan           Scan for nearby BLE smartwatches
-  sniff          Sniff raw BLE packets from the watch
-  buzz           Vibrate/buzz the smartwatch (Find Watch)
-  simulate       Locally simulate a gesture count without BLE hardware
-  snoop-extract  Extract BTSnoop pcap from an Android bugreport text file
-  profiles       List available gesture profiles and hotkeys
-  gui            Launch the graphical desktop interface
+  run             Run the background gesture controller daemon
+  scan            Scan for nearby BLE smartwatches
+  sniff           Sniff raw BLE packets from the watch
+  buzz            Vibrate/buzz the smartwatch (Find Watch)
+  simulate        Locally simulate a gesture count without BLE hardware
+  snoop-extract   Extract BTSnoop pcap from an Android bugreport text file
+  profiles        List available gesture profiles and hotkeys
+  gui             Launch the graphical desktop interface
+  telemetry       Launch live GPS & biometric telemetry receiver & HUD
+  telemetry-send  Send a message to smartwatch screen via telemetry relay
 ```
 
 ### Examples
@@ -279,6 +281,41 @@ python run.py snoop-extract bugreport.txt -o capture.pcap
 ```powershell
 python -m watchgesture scan --timeout 8.0
 ```
+
+---
+
+## 🛰️ Real-Time GPS & Biometric Telemetry
+
+In addition to wrist gesture media control, WatchGesture includes a zero-tap **mobile telemetry bridge and desktop HUD**:
+
+```mermaid
+flowchart LR
+    WATCH["⌚ Smartwatch (BLE)\nHeart Rate (0x180D)\nSteps (0xFEE1)"] -->|"Web Bluetooth"| PHONE["📱 Mobile Phone\nHigh-Accuracy GPS\nphone_bridge.html"]
+    PHONE -->|"HTTPS POST (Every 5s)"| CLOUD["☁️ Cloud Relay\nntfy.sh Stream"]
+    CLOUD -->|"SSE / JSON Stream"| LAPTOP["💻 Laptop / Desktop\nLive Map HUD (live_map.html)\npython run.py telemetry"]
+    LAPTOP -->|"Opcode 0x41 (Push Text)"| PHONE
+    PHONE -->|"FEE2 Write"| WATCH
+```
+
+### How to Use Telemetry:
+
+1. **Launch the Telemetry Receiver & HUD on PC:**
+   ```powershell
+   python run.py telemetry
+   ```
+   *Spins up a local HTTP server at `http://localhost:8765/live_map.html` and opens the live satellite dashboard.*
+
+2. **Open the Mobile Bridge on your Phone:**
+   - Open `http://<your-pc-ip>:8765/phone_bridge.html` on your phone browser.
+   - GPS satellite tracking starts **automatically** on page load with zero clicks.
+   - Tap **"Link Smartwatch BLE"** to stream live watch pulse (BPM) and pedometer steps.
+
+3. **Bi-directional Push Messaging:**
+   - Type any text message in the terminal or on the live map dashboard and press **Enter** to pop it up directly onto the watch screen (Opcode `0x41` / `CMD_SEND_MESSAGE`).
+   - Or push from the command line:
+     ```powershell
+     python run.py telemetry-send --message "Dinner is ready!"
+     ```
 
 **Run controller with specific MAC and Media profile:**
 ```powershell

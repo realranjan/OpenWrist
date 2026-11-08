@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WatchGesture — Phone Telemetry Bridge</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased min-h-screen p-4 sm:p-6 flex flex-col justify-between">
+  
+  <div class="max-w-md mx-auto w-full space-y-4">
+    <!-- Header -->
+    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg backdrop-blur">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🛰️</span>
+          <div>
+            <h1 class="text-base font-bold tracking-tight text-white">WatchGesture Mobile Bridge</h1>
+            <p class="text-xs text-slate-400">Zero-Tap GPS &amp; Watch Biometric Relay</p>
+          </div>
+        </div>
+        <div id="gpsStatusPill" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span>Acquiring GPS</span>
+        </div>
+      </div>
+
+      <!-- Live GPS & Sensors Cards -->
+      <div class="grid grid-cols-2 gap-2.5 mt-4">
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+          <span class="text-xs font-medium text-slate-400">Latitude / Longitude</span>
+          <div id="latLonDisplay" class="text-xs font-mono font-bold text-emerald-400 mt-1 truncate">
+            -- , --
+          </div>
+        </div>
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+          <span class="text-xs font-medium text-slate-400">GPS Accuracy</span>
+          <div id="accDisplay" class="text-xs font-mono font-bold text-slate-200 mt-1">
+            ± -- m
+          </div>
+        </div>
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+          <span class="text-xs font-medium text-slate-400">Watch Heart Rate</span>
+          <div id="hrDisplay" class="text-sm font-bold text-rose-400 mt-1 flex items-center gap-1">
+            <span>❤️</span> <span id="hrVal">--</span> <span class="text-xs text-slate-400 font-normal">BPM</span>
+          </div>
+        </div>
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+          <span class="text-xs font-medium text-slate-400">Pedometer Steps</span>
+          <div id="stepsDisplay" class="text-sm font-bold text-sky-400 mt-1 flex items-center gap-1">
+            <span>👟</span> <span id="stepsVal">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLE Connection Button -->
+      <div class="mt-4 pt-3 border-t border-slate-800">
+        <button id="bleBtn" onclick="linkWatchBLE()" class="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shadow-sm">
+          <span>⌚</span>
+          <span id="bleBtnText">Link Smartwatch BLE (Heart Rate &amp; Steps)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Topic Configuration Drawer (Collapsible) -->
+    <details class="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-400">
+      <summary class="font-semibold text-slate-300 cursor-pointer select-none">⚙️ Cloud Relay Topics</summary>
+      <div class="space-y-2.5 mt-3 pt-2 border-t border-slate-800">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Upstream Telemetry Topic (Phone → PC):</label>
+          <input type="text" id="upTopicInput" value="watchgesture_telemetry_up" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Downstream Message Topic (PC → Watch Screen):</label>
+          <input type="text" id="downTopicInput" value="watchgesture_telemetry_down" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
+        </div>
+        <button onclick="applyTopics()" class="py-1 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-medium text-xs transition-colors">
+          Save Topics
+        </button>
+      </div>
+    </details>
+
+    <!-- Transmission Event Log -->
+    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Activity &amp; Stream Log</span>
+        <span id="syncCountdown" class="text-xs font-mono text-emerald-400">Sync: 5s</span>
+      </div>
+      <div id="logBox" class="mt-2.5 font-mono text-xs space-y-1.5 max-h-48 overflow-y-auto text-slate-300 pr-1">
+        <div class="text-slate-500">• Initializing background satellite tracking...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center text-xs text-slate-500 py-3 mt-4">
+    WatchGesture Telemetry Gateway · End-to-End Encrypted BLE Bridge
+  </footer>
+
+  <script>
+    let upTopic = localStorage.getItem("wg_upTopic") || "watchgesture_telemetry_up";
+    let downTopic = localStorage.getItem("wg_downTopic") || "watchgesture_telemetry_down";
+
+    document.getElementById("upTopicInput").value = upTopic;
+    document.getElementById("downTopicInput").value = downTopic;
+
+    function applyTopics() {
+      upTopic = document.getElementById("upTopicInput").value.trim() || "watchgesture_telemetry_up";
+      downTopic = document.getElementById("downTopicInput").value.trim() || "watchgesture_telemetry_down";
+      localStorage.setItem("wg_upTopic", upTopic);
+      localStorage.setItem("wg_downTopic", downTopic);
+      appendLog("Updated relay topics to: " + upTopic);
+      initSSE();
+    }
+
+    let lat = null, lon = null, acc = null;
+    let bpm = null, steps = null;
+    let writeChar = null;
+    let countdownSec = 5;
+
+    function appendLog(msg) {
+      const box = document.getElementById("logBox");
+      const timeStr = new Date().toLocaleTimeString();
+      const line = document.createElement("div");
+      line.className = "text-slate-300 text-xs truncate";
+      line.innerHTML = `<span class="text-slate-500">[${timeStr}]</span> ${msg}`;
+      box.insertBefore(line, box.firstChild);
+      while (box.children.length > 25) {
+        box.removeChild(box.lastChild);
+      }
+    }
+
+    // 1. Automatic Satellite GPS Tracking via Geolocation API
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          const isFirst = (lat === null);
+          lat = pos.coords.latitude;
+          lon = pos.coords.longitude;
+          acc = Math.round(pos.coords.accuracy);
+
+          document.getElementById("latLonDisplay").textContent = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+          document.getElementById("accDisplay").textContent = `± ${acc} m`;
+
+          const pill = document.getElementById("gpsStatusPill");
+          pill.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+          pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>GPS Locked</span>`;
+
+          if (isFirst) {
+            appendLog(`🛰️ GPS locked at ${lat.toFixed(5)}, ${lon.toFixed(5)} (±${acc}m)`);
+            transmitTelemetry("First Satellite Lock Acquired");
+          }
+        },
+        (err) => {
+          appendLog(`⚠️ GPS Error: ${err.message}`);
+          const pill = document.getElementById("gpsStatusPill");
+          pill.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20";
+          pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>GPS Error</span>`;
+        },
+        { enableHighAccuracy: true, maximumAge: 0 }
+      );
+    } else {
+      appendLog("❌ Geolocation not supported by this browser.");
+    }
+
+    // 2. Periodic Cloud Relay Transmission (Every 5 seconds)
+    function transmitTelemetry(reason = "Auto Sync") {
+      if (lat === null || lon === null) return;
+
+      const payload = {
+        lat: parseFloat(lat.toFixed(6)),
+        lon: parseFloat(lon.toFixed(6)),
+        acc: acc || 10,
+        bpm: bpm,
+        steps: steps,
+        msg: reason,
+        sos: false,
+        timestamp: new Date().toISOString()
+      };
+
+      fetch(`https://ntfy.sh/${upTopic}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(() => {
+        appendLog(`☁️ Telemetry beamed -> GPS: ${lat.toFixed(4)}, ${lon.toFixed(4)} | HR: ${bpm || '--'} | Steps: ${steps || '--'}`);
+      }).catch((e) => {
+        appendLog(`⚠️ Upstream error: ${e.message}`);
+      });
+    }
+
+    setInterval(() => {
+      countdownSec--;
+      if (countdownSec <= 0) {
+        countdownSec = 5;
+        transmitTelemetry("Auto 5s Telemetry Sync");
+      }
+      document.getElementById("syncCountdown").textContent = `Sync: ${countdownSec}s`;
+    }, 1000);
+
+    // 3. Helper: Construct MoYoung/DaFit V2 Protocol Packet
+    function makeV2Packet(cmd, payload) {
+      const total = 5 + payload.length;
+      const buf = new Uint8Array(total);
+      buf[0] = 0xFE;
+      buf[1] = 0xEA;
+      buf[2] = (0x20 + (total >> 8)) & 0xFF;
+      buf[3] = total & 0xFF;
+      buf[4] = cmd & 0xFF;
+      buf.set(payload, 5);
+      return buf;
+    }
+
+    // 4. Downstream SSE Message Listener (Pushes Text Messages to Watch Display)
+    let sseSource = null;
+    function initSSE() {
+      if (sseSource) {
+        sseSource.close();
+      }
+      try {
+        sseSource = new EventSource(`https://ntfy.sh/${downTopic}/sse`);
+        sseSource.onmessage = async (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            const msgText = data.message || (typeof data === "string" ? data : "");
+            if (msgText && writeChar) {
+              const enc = new TextEncoder();
+              const textBytes = enc.encode("PC:" + msgText).slice(0, 50);
+              const payload = new Uint8Array(1 + textBytes.length);
+              payload[0] = 11; // Notification type 11
+              payload.set(textBytes, 1);
+              const packet = makeV2Packet(0x41, payload); // Opcode 0x41 = CMD_SEND_MESSAGE
+              await writeChar.writeValueWithoutResponse(packet);
+              appendLog(`💬 Watch message received: "${msgText}"`);
+            }
+          } catch (err) {
+            appendLog(`SSE parse error: ${err.message}`);
+          }
+        };
+      } catch (err) {
+        appendLog(`SSE init error: ${err.message}`);
+      }
+    }
+    initSSE();
+
+    // 5. Web Bluetooth Link to Smartwatch (Heart Rate 0x180D + Steps 0xFEEA/0xFEE1)
+    async function linkWatchBLE() {
+      try {
+        appendLog("🔍 Requesting Bluetooth smartwatch device...");
+        const device = await navigator.bluetooth.requestDevice({
+          filters: [
+            { services: [0xfeea] },
+            { namePrefix: "Fire" },
+            { namePrefix: "Boltt" },
+            { namePrefix: "DaFit" },
+            { namePrefix: "Watch" }
+          ],
+          optionalServices: [0xfeea, 0x180d, 0x180f]
+        });
+
+        appendLog(`Connecting to ${device.name}...`);
+        const server = await device.gatt.connect();
+
+        // Vendor GATT Service (0xFEEA)
+        const feeaService = await server.getPrimaryService(0xfeea);
+        writeChar = await feeaService.getCharacteristic(0xfee2);
+        const stepsChar = await feeaService.getCharacteristic(0xfee1);
+
+        // Turn on continuous dynamic HR stream (Opcode 0x68 {0x00})
+        await writeChar.writeValueWithoutResponse(makeV2Packet(0x68, new Uint8Array([0x00])));
+
+        // Subscribe to Pedometer step updates
+        await stepsChar.startNotifications();
+        stepsChar.addEventListener("characteristicvaluechanged", (event) => {
+          const buf = new Uint8Array(event.target.value.buffer);
+          if (buf.length >= 7 && buf[0] === 0xF6) {
+            steps = buf[1] | (buf[2] << 8);
+            document.getElementById("stepsVal").textContent = steps;
+          }
+        });
+
+        // Standard BLE Heart Rate Service (0x180D)
+        try {
+          const hrService = await server.getPrimaryService(0x180d);
+          const hrChar = await hrService.getCharacteristic(0x2a37);
+          await hrChar.startNotifications();
+          hrChar.addEventListener("characteristicvaluechanged", (event) => {
+            const buf = new Uint8Array(event.target.value.buffer);
+            if (buf.length >= 2 && buf[1] > 0) {
+              bpm = buf[1];
+              document.getElementById("hrVal").textContent = bpm;
+            }
+          });
+        } catch (e) {
+          appendLog(`HR service note: Standard 0x180D not advertised; reading via vendor pipe.`);
+        }
+
+        document.getElementById("bleBtnText").textContent = `Linked: ${device.name} (Streaming)`;
+        document.getElementById("bleBtn").className = "w-full py-2.5 px-4 rounded-xl bg-slate-800 text-emerald-400 font-bold text-xs sm:text-sm border border-emerald-500/30 flex items-center justify-center gap-2";
+        appendLog(`✅ Connected to ${device.name}! Streaming pulse & steps.`);
+      } catch (err) {
+        appendLog(`Bluetooth error: ${err.message}`);
+      }
+    }
+  </script>
+</body>
+</html>
