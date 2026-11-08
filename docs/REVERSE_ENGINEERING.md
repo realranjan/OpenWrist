@@ -21,7 +21,7 @@ A comprehensive, ground-up guide to reverse-engineering Bluetooth Low Energy (BL
 
 ## 1. Hardware & Architecture Overview
 
-The Fire-Boltt 184 and the vast majority of consumer smartwatches in the \$20–\$80 category (branded as DaFit, MoYoung, Colmi, Zeblaze, Noise, BoAt, etc.) share a common hardware lineage:
+The Fire-Boltt 184 and the vast majority of consumer smartwatches in the \$20–\$80 category (branded as DaFit, Colmi, Zeblaze, Noise, BoAt, etc.) share a common hardware lineage:
 
 - **Core SoC:** Realtek RTL8762 series (ARM Cortex-M4F, ~40MHz, 160KB RAM, integrated BLE 5.0 transceiver).
 - **Motion Sensor:** 3-axis MEMS accelerometer (Bosch BMA421, STMicroelectronics LIS3DH, or Silan Micro SC7A20) linked to the SoC via I²C or SPI.
@@ -204,7 +204,7 @@ asyncio.run(probe())
 When exploring uncharted opcodes, follow this reverse-engineering matrix:
 
 ### 1. Observe SET vs QUERY Patterns
-In the DaFit/MoYoung protocol, setting a value and querying a value typically follow a predictable mathematical delta:
+In the DaFit / Fire-Boltt protocol, setting a value and querying a value typically follow a predictable mathematical delta:
 - **Set Alarm Clock:** `CMD_SET = 17 (0x11)`
 - **Query Alarm Clock:** `CMD_QUERY = 33 (0x21)` $(\Delta = +16)$
 - **Set Raise-to-Wake:** `CMD_SET = 24 (0x18)`
@@ -224,7 +224,7 @@ When the phone sends notifications to the watch:
 
 ## 8. Master Opcode Reference Table
 
-Authoritative table of reverse-engineered binary commands across the MoYoung / DaFit / Fire-Boltt protocol family:
+Authoritative table of reverse-engineered binary commands across the DaFit / Fire-Boltt protocol family:
 
 | Opcode (Hex) | Dec | Pipe | Direction | Description & Payload Layout |
 |:---:|:---:|:---:|:---:|---|
@@ -257,7 +257,7 @@ If you have a different smartwatch (e.g. from BoAt, Noise, Amazfit, Colmi, Zebla
 
 ### Step 1: Identify the SoC Family & Companion App
 Look at the companion app mentioned in the smartwatch manual:
-- **Da Fit / MoYoung:** Realtek RTL8762 series SoC. Uses `0xFEEA` service family. (Fully compatible with WatchGesture out of the box).
+- **Da Fit / Fire-Boltt:** Realtek RTL8762 series SoC. Uses `0xFEEA` service family. (Fully compatible with WatchGesture out of the box).
 - **GloryFit:** Realtek or Dialog DA1469x SoC. Usually uses vendor service `0000fee7-...` or custom 128-bit UUID.
 - **FitCloudPro:** Realtek or Goodix GR5515 SoC. Uses service `0000fee7-...` with fixed-header byte framing.
 - **Zepp Life / Amazfit:** Dialog / Ambiq Micro SoC. Uses standard 16-bit UUIDs with protobuf/crypto framing.

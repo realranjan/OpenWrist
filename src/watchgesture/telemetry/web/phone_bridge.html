@@ -198,7 +198,7 @@
       document.getElementById("syncCountdown").textContent = `Sync: ${countdownSec}s`;
     }, 1000);
 
-    // 3. Helper: Construct MoYoung/DaFit V2 Protocol Packet
+    // 3. Helper: Construct DaFit / Fire-Boltt V2 Protocol Packet
     function makeV2Packet(cmd, payload) {
       const total = 5 + payload.length;
       const buf = new Uint8Array(total);

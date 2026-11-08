@@ -1,7 +1,7 @@
 """
 BLE Device Scanner and Smartwatch Discovery for WatchGesture.
 
-Automatically discovers nearby Fire-Boltt, DaFit, and Moyoung smartwatches
+Automatically discovers nearby Fire-Boltt, DaFit, and compatible smartwatches
 advertising the vendor-specific 0xFEEA service or recognized manufacturer names.
 """
 
@@ -24,7 +24,7 @@ KNOWN_WATCH_KEYWORDS = [
     "fireboltt",
     "boltt",
     "dafit",
-    "moyoung",
+    "realtek",
     "184",
     "watch",
     "smart",

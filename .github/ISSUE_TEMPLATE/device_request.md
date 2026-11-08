@@ -8,7 +8,7 @@ assignees: ''
 
 ## Device Information
 - **Manufacturer & Model:** (e.g. Fire-Boltt, Noise, BoAt, Zeblaze, Colmi)
-- **Companion App Name:** (e.g. Da Fit, MoYoung, GloryFit, FitCloudPro)
+- **Companion App Name:** (e.g. Da Fit, GloryFit, FitCloudPro)
 - **Advertised Service UUIDs:** (e.g. `0000feea-0000-1000-8000-00805f9b34fb`)
 
 ## HCI Snoop Log Extraction

@@ -15,7 +15,7 @@
 
 ---
 
-**WatchGesture** is an open-source, production-grade smartwatch reverse-engineering toolkit and automation suite for consumer Bluetooth Low Energy (BLE) smartwatches (Fire-Boltt, DaFit, MoYoung, Colmi, Zeblaze, and Realtek RTL8762 chipset variants).
+**WatchGesture** is an open-source, production-grade smartwatch reverse-engineering toolkit and automation suite for consumer Bluetooth Low Energy (BLE) smartwatches (Fire-Boltt, DaFit, Colmi, Zeblaze, and Realtek RTL8762 chipset variants).
 
 It turns sub-\$50 smartwatches into **hands-free desktop wrist gesture controllers** and **live satellite GPS & biometric tracking beacons** with zero mobile app installs and zero hardware dongles.
 
@@ -76,7 +76,7 @@ WatchGesture provides two distinct, modular operating modes:
 
 ## Master Opcode Reference Table
 
-The Fire-Boltt 184 and compatible DaFit/Moyoung watches implement a proprietary binary protocol over vendor GATT service `0000feea-0000-1000-8000-00805f9b34fb`:
+The Fire-Boltt 184 and compatible DaFit/Realtek watches implement a proprietary binary protocol over vendor GATT service `0000feea-0000-1000-8000-00805f9b34fb`:
 
 | Opcode | Pipe | Direction | Function | Payload Structure |
 |:---:|:---:|:---:|---|---|

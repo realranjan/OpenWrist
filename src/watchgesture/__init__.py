@@ -2,7 +2,7 @@
 WatchGesture - Smartwatch BLE Wrist-Gesture Controller.
 
 A modular, zero-lag Bluetooth Low Energy controller that translates
-smartwatch wrist flicks (Fire-Boltt / DaFit / Moyoung chipsets) into
+smartwatch wrist flicks (Fire-Boltt / DaFit / Realtek RTL8762 chipsets) into
 programmable desktop keyboard and media actions.
 """
 

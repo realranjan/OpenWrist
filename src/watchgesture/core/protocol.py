@@ -1,5 +1,5 @@
 """
-Bluetooth Low Energy Protocol Specifications for MoYoung-v2 / DaFit / Fire-Boltt smartwatches.
+Bluetooth Low Energy Protocol Specifications for DaFit / Fire-Boltt / Realtek RTL8762 smartwatches.
 
 Encapsulates complete reverse-engineered GATT services, opcodes, packet reassembly,
 and command serialization for the vendor-specific 0xFEEA service family (Realtek RTL8762 SoCs).
@@ -26,7 +26,7 @@ MAGIC_BYTE_2: int = 0xEA
 HEADER_LEN: int = 5
 DEFAULT_MTU: int = 247
 
-# --- Firmware Command Opcodes (MoYoung / DaFit Standard) ---
+# --- Firmware Command Opcodes (DaFit / Fire-Boltt Standard) ---
 
 # Camera & Screen Navigation
 CMD_RETURN_HOME: int = 83               # 0x53: Out {} return home; In: camera view closed
@@ -84,13 +84,13 @@ CMD_QUERY_DEVICE_VERSION: int = 46     # 0x2E: Firmware version query
 CMD_SET_POWER_SAVING: int = 0x94       # 148: Power saving mode toggle
 CMD_SHUTDOWN: int = 81                 # 0x51: {0xFF} powers watch off
 
-# Watch clock timezone (MoYoung firmwares are hardwired to GMT+8 internally)
+# Watch clock timezone (Firmwares are hardwired to GMT+8 internally)
 _WATCH_TZ = timezone(timedelta(hours=8))
 
 
 @dataclass(frozen=True)
 class PacketV2:
-    """Represents a validated, parsed DaFit / MoYoung V2 protocol packet."""
+    """Represents a validated, parsed DaFit / Fire-Boltt V2 protocol packet."""
     cmd: int
     payload: bytes
     raw: bytes
