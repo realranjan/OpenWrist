@@ -25,6 +25,22 @@
         </div>
       </div>
 
+      <!-- Chrome Insecure Context Warning (Hidden by default, shown if Chrome restricts LAN HTTP) -->
+      <div id="chromeWarningBox" class="hidden mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-300">
+        <div class="font-bold flex items-center gap-1.5 mb-1">
+          <span>⚠️</span> Chrome LAN Restriction Detected
+        </div>
+        <p class="text-[11px] text-amber-200/90 leading-relaxed">
+          Chrome restricts Geolocation &amp; Web Bluetooth over plain HTTP on LAN.
+          To allow this site to get its GPS &amp; Bluetooth in Chrome:
+        </p>
+        <ol class="list-decimal list-inside text-[11px] text-amber-200/90 mt-1 space-y-0.5">
+          <li>Open <code class="font-mono bg-slate-900 px-1 rounded">chrome://flags/#unsafely-treat-insecure-origin-as-secure</code></li>
+          <li>Add <code class="font-mono bg-slate-900 px-1 rounded" id="chromeOriginHint">http://...</code> &amp; set to <b>Enabled</b></li>
+          <li>Relaunch Chrome, or use <code class="font-mono bg-slate-900 px-1 rounded">adb reverse tcp:8765 tcp:8765</code></li>
+        </ol>
+      </div>
+
       <!-- Live GPS & Sensors Cards -->
       <div class="grid grid-cols-2 gap-2.5 mt-4">
         <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
@@ -130,6 +146,18 @@
       }
     }
 
+    // Check Secure Context for Chrome
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    if (!window.isSecureContext && !isLocal) {
+      const warnBox = document.getElementById("chromeWarningBox");
+      const hint = document.getElementById("chromeOriginHint");
+      if (warnBox && hint) {
+        hint.textContent = window.location.origin;
+        warnBox.classList.remove("hidden");
+      }
+      appendLog("⚠️ Insecure origin: Chrome blocks GPS/BLE over LAN HTTP without chrome://flags setup.");
+    }
+
     // 1. Automatic Satellite GPS Tracking via Geolocation API
     if (navigator.geolocation) {
       navigator.geolocation.watchPosition(
@@ -152,7 +180,11 @@
           }
         },
         (err) => {
-          appendLog(`⚠️ GPS Error: ${err.message}`);
+          let extra = "";
+          if (err.code === 1) {
+            extra = " (Permission Denied — tap Chrome lock icon -> Permissions -> Allow Location)";
+          }
+          appendLog(`⚠️ GPS Error: ${err.message}${extra}`);
           const pill = document.getElementById("gpsStatusPill");
           pill.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20";
           pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>GPS Error</span>`;
@@ -301,6 +333,41 @@
       } catch (err) {
         appendLog(`Bluetooth error: ${err.message}`);
       }
+    }
+
+    // 6. Chrome Screen Wake Lock API (Keeps GPS alive in background/pocket)
+    let wakeLock = null;
+    async function requestWakeLock() {
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLock = await navigator.wakeLock.request("screen");
+          appendLog("🔋 Chrome Screen Wake Lock active (prevents background throttling).");
+          wakeLock.addEventListener("release", () => {
+            appendLog("ℹ️ Screen Wake Lock released.");
+          });
+        }
+      } catch (err) {
+        appendLog(`Wake Lock note: ${err.message}`);
+      }
+    }
+
+    requestWakeLock();
+    document.addEventListener("visibilitychange", async () => {
+      if (wakeLock !== null && document.visibilityState === "visible") {
+        await requestWakeLock();
+      }
+    });
+
+    // Check Chrome Permissions status
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: "geolocation" }).then((result) => {
+        if (result.state === "denied") {
+          appendLog("❌ Chrome Location blocked. Tap the tune/padlock icon in the Chrome URL bar -> Permissions -> Allow Location.");
+        }
+        result.onchange = () => {
+          appendLog(`ℹ️ Chrome Location permission changed to: ${result.state}`);
+        };
+      }).catch(() => {});
     }
   </script>
 </body>

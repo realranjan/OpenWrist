@@ -12,6 +12,7 @@ import http.server
 import json
 import logging
 import os
+import socket
 import threading
 import time
 import urllib.error
@@ -25,6 +26,19 @@ from watchgesture.telemetry.models import TelemetryConfig, TelemetryPoint
 logger = logging.getLogger(__name__)
 
 WEB_DIR = Path(__file__).parent / "web"
+
+
+def get_lan_ip() -> str:
+    """Returns the primary local area network (LAN) IPv4 address of this machine."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("10.255.255.255", 1))
+        ip = str(s.getsockname()[0])
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
 
 
 class TelemetryHTTPHandler(http.server.SimpleHTTPRequestHandler):
@@ -114,7 +128,8 @@ class TelemetryReceiver:
         self._http_thread.start()
 
         map_url = f"http://localhost:{port}/live_map.html?up={self.config.upstream_topic}&down={self.config.downstream_topic}"
-        logger.info("Telemetry Web Server running at: http://localhost:%d", port)
+        lan_ip = get_lan_ip()
+        logger.info("Telemetry Web Server running at: http://localhost:%d (LAN: http://%s:%d)", port, lan_ip, port)
 
         if open_browser:
             webbrowser.open(map_url)

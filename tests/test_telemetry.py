@@ -7,11 +7,16 @@ from datetime import datetime, timezone
 import unittest
 
 from watchgesture.telemetry.models import TelemetryConfig, TelemetryPoint
-from watchgesture.telemetry.server import TelemetryReceiver, WEB_DIR
+from watchgesture.telemetry.server import TelemetryReceiver, WEB_DIR, get_lan_ip
 
 
 class TestTelemetryModels(unittest.TestCase):
     """Verifies GPS and biometric data serialization and validation."""
+
+    def test_get_lan_ip(self) -> None:
+        ip = get_lan_ip()
+        self.assertIsInstance(ip, str)
+        self.assertGreater(len(ip.split(".")), 1)
 
     def test_point_serialization(self) -> None:
         point = TelemetryPoint(

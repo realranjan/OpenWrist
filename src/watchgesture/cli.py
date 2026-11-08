@@ -82,7 +82,7 @@ def cmd_profiles(args: argparse.Namespace) -> int:
 
 def cmd_telemetry(args: argparse.Namespace) -> int:
     """Launches the real-time satellite GPS & biometric telemetry receiver."""
-    from watchgesture.telemetry import TelemetryConfig, TelemetryPoint, TelemetryReceiver
+    from watchgesture.telemetry import TelemetryConfig, TelemetryPoint, TelemetryReceiver, get_lan_ip
 
     config = TelemetryConfig(
         upstream_topic=args.up_topic or "watchgesture_telemetry_up",
@@ -112,8 +112,16 @@ def cmd_telemetry(args: argparse.Namespace) -> int:
     port = receiver.start_http_server(open_browser=not args.no_browser)
     receiver.start_listener()
 
-    print(f"✅ Dashboard open at: http://localhost:{port}/live_map.html")
-    print(f"📱 Phone Bridge: http://localhost:{port}/phone_bridge.html")
+    lan_ip = get_lan_ip()
+    print(f"✅ Desktop HUD  : http://localhost:{port}/live_map.html")
+    print(f"📱 Phone Bridge : http://{lan_ip}:{port}/phone_bridge.html")
+    print("-" * 70)
+    print("💡 Chrome Mobile Configuration (to allow GPS & BLE over LAN):")
+    print(f"   1. In Chrome on phone, navigate to: http://{lan_ip}:{port}/phone_bridge.html")
+    print("   2. In Chrome Site Settings (lock icon in URL bar) -> Allow Location & Bluetooth")
+    print(f"   3. Or enable Chrome flag: chrome://flags/#unsafely-treat-insecure-origin-as-secure -> add http://{lan_ip}:{port}")
+    print(f"   4. Or zero-flag USB tethering: 'adb reverse tcp:{port} tcp:{port}' and visit http://localhost:{port}")
+    print("-" * 70)
     print("\nType any message and press [ENTER] to push it to the watch screen (Ctrl+C to quit):\n")
 
     try:

@@ -6,12 +6,13 @@ Enables zero-tap mobile satellite GPS tracking, smartwatch biometric streaming
 """
 
 from watchgesture.telemetry.models import TelemetryConfig, TelemetryPoint
-from watchgesture.telemetry.server import TelemetryReceiver, WEB_DIR
+from watchgesture.telemetry.server import TelemetryReceiver, WEB_DIR, get_lan_ip
 
 __all__ = [
     "TelemetryPoint",
     "TelemetryConfig",
     "TelemetryReceiver",
     "WEB_DIR",
+    "get_lan_ip",
 ]
 

@@ -12,6 +12,7 @@ An autonomous, zero-tap mobile telemetry bridge and desktop command center for l
 5. [Desktop Command Center & Live Map HUD](#desktop-command-center--live-map-hud)
 6. [Bi-directional Watch Screen Text Injection](#bi-directional-watch-screen-text-injection)
 7. [Quickstart Guide](#quickstart-guide)
+8. [Chrome Mobile Configuration & Permissions](#chrome-mobile-configuration-site-permissions--secure-context)
 
 ---
 
@@ -129,6 +130,38 @@ python run.py telemetry
 2. Open `http://<your-pc-ip>:8765/phone_bridge.html` in Chrome on your phone.
 3. Satellite GPS tracking begins automatically.
 4. *(Optional)* Tap **"Link Smartwatch BLE"** to stream pulse and steps.
+
+---
+
+## Chrome Mobile Configuration (Site Permissions & Secure Context)
+
+Because Chrome for Android enforces modern web security standards, accessing hardware sensors (GPS via `navigator.geolocation` and Bluetooth via `navigator.bluetooth`) over a local network requires granting Chrome permissions:
+
+### Option A: Enable Insecure Origins in Chrome (Recommended for Wi-Fi)
+1. On your phone's Chrome browser, navigate to:
+   ```
+   chrome://flags/#unsafely-treat-insecure-origin-as-secure
+   ```
+2. Enable the flag and enter your PC's LAN URL:
+   ```
+   http://192.168.x.x:8765
+   ```
+3. Tap **Relaunch** at the bottom of Chrome. Chrome will now grant full Geolocation and Web Bluetooth access.
+
+### Option B: Zero-Flag USB Port Forwarding (ADB)
+If connected via USB cable:
+```powershell
+adb reverse tcp:8765 tcp:8765
+```
+Then simply open `http://localhost:8765/phone_bridge.html` on your phone. Chrome treats `localhost` as an intrinsically secure origin, requiring zero flag changes.
+
+### Option C: Chrome Site Settings (Permissions)
+When visiting the bridge:
+1. Tap the **tune / padlock icon** on the left of Chrome's address bar.
+2. Select **Permissions** $\to$ ensure **Location** is set to **"Allow"** and **Nearby devices / Bluetooth** is enabled.
+3. The built-in **Screen Wake Lock API** automatically prevents Chrome from suspending GPS updates when the screen dims or the phone is in your pocket.
+
+---
 
 ### 3. Send Text to Watch Screen:
 Type a message in the desktop HUD or run:
