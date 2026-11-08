@@ -1,7 +1,7 @@
-# WatchGesture
+# OpenWrist
 
 <p align="center">
-  <img src="docs/assets/banner.svg" alt="WatchGesture Banner" width="100%" />
+  <img src="docs/assets/banner.svg" alt="OpenWrist Banner" width="100%" />
 </p>
 
 <p align="center">
@@ -15,7 +15,7 @@
 
 ---
 
-**WatchGesture** is an open-source, production-grade smartwatch reverse-engineering toolkit and automation suite for consumer Bluetooth Low Energy (BLE) smartwatches (Fire-Boltt, DaFit, Colmi, Zeblaze, and Realtek RTL8762 chipset variants).
+**OpenWrist** (WatchGesture) is an open-source, production-grade smartwatch reverse-engineering toolkit and automation suite for consumer Bluetooth Low Energy (BLE) smartwatches (Fire-Boltt, DaFit, Colmi, Zeblaze, and Realtek RTL8762 chipset variants).
 
 It turns sub-\$50 smartwatches into **hands-free desktop wrist gesture controllers** and **live satellite GPS & biometric tracking beacons** with zero mobile app installs and zero hardware dongles.
 

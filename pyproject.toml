@@ -45,6 +45,7 @@ dependencies = [
 ]
 
 [project.scripts]
+openwrist = "watchgesture.cli:main"
 watchgesture = "watchgesture.cli:main"
 
 [tool.setuptools.packages.find]
