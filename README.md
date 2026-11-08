@@ -5,17 +5,17 @@
 </p>
 
 <p align="center">
-  <a href="#features"><img src="https://img.shields.io/badge/Status-Production--Ready-34d399?style=flat-square" alt="Status" /></a>
+  <a href="https://github.com/realranjan/OpenWrist/releases/tag/v1.0.0"><img src="https://img.shields.io/badge/Release-v1.0.0-emerald?style=flat-square" alt="Release" /></a>
+  <a href="#testing"><img src="https://img.shields.io/badge/Tests-37%2F37%20Passing-34d399?style=flat-square" alt="Tests" /></a>
   <a href="#requirements"><img src="https://img.shields.io/badge/Python-3.9%2B-38bdf8?style=flat-square&logo=python&logoColor=white" alt="Python Version" /></a>
   <a href="#architecture"><img src="https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-818cf8?style=flat-square&logo=windows&logoColor=white" alt="Platform" /></a>
   <a href="#protocol"><img src="https://img.shields.io/badge/Protocol-DaFit%20%2F%20Fire--Boltt%20V2-c084fc?style=flat-square" alt="Protocol" /></a>
-  <a href="#testing"><img src="https://img.shields.io/badge/Tests-37%2F37%20Passing-34d399?style=flat-square" alt="Tests" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="License" /></a>
 </p>
 
 ---
 
-**OpenWrist** (WatchGesture) is an open-source, production-grade smartwatch reverse-engineering toolkit and automation suite for consumer Bluetooth Low Energy (BLE) smartwatches (Fire-Boltt, DaFit, Colmi, Zeblaze, and Realtek RTL8762 chipset variants).
+**OpenWrist** (formerly WatchGesture) is an open-source, production-grade smartwatch reverse-engineering toolkit and automation suite for consumer Bluetooth Low Energy (BLE) smartwatches (Fire-Boltt, DaFit, Colmi, Zeblaze, and Realtek RTL8762 chipset variants).
 
 It turns sub-\$50 smartwatches into **hands-free desktop wrist gesture controllers** and **live satellite GPS & biometric tracking beacons** with zero mobile app installs and zero hardware dongles.
 
@@ -33,7 +33,7 @@ It turns sub-\$50 smartwatches into **hands-free desktop wrist gesture controlle
 
 ## ⚡ Dual-Pillar Architecture
 
-WatchGesture provides two distinct, modular operating modes:
+OpenWrist provides two distinct, modular operating modes:
 
 ```
                                   ┌────────────────────────┐
@@ -96,7 +96,7 @@ The Fire-Boltt 184 and compatible DaFit/Realtek watches implement a proprietary 
 
 > [!TIP]
 > **Reverse-Engineering Your Own Smartwatch:**
-> Want to adapt WatchGesture for another brand (BoAt, Noise, Amazfit, Colmi)? Read the step-by-step [Universal Reverse-Engineering Cookbook](docs/REVERSE_ENGINEERING.md#9-how-to-reverse-engineer-your-own-smartwatch-universal-cookbook).
+> Want to adapt OpenWrist for another brand (BoAt, Noise, Amazfit, Colmi)? Read the step-by-step [Universal Reverse-Engineering Cookbook](docs/REVERSE_ENGINEERING.md#9-how-to-reverse-engineer-your-own-smartwatch-universal-cookbook).
 
 ---
 
@@ -105,8 +105,8 @@ The Fire-Boltt 184 and compatible DaFit/Realtek watches implement a proprietary 
 ### 1. Installation
 Clone the repository and install in editable mode:
 ```powershell
-git clone https://github.com/<your-username>/watchgesture.git
-cd watchgesture
+git clone https://github.com/realranjan/OpenWrist.git
+cd OpenWrist
 pip install -e .
 ```
 
@@ -166,18 +166,21 @@ python run.py simulate --flicks 3   # Dispatches [win + d]
 ```powershell
 python run.py telemetry
 ```
-1. **Starts the local telemetry receiver** and opens `http://localhost:8765/live_map.html` in your default browser.
-2. **Open the Phone Bridge:** Open `http://<your-pc-ip>:8765/phone_bridge.html` on your phone browser.
-3. Satellite GPS tracking begins automatically.
+1. **Starts the local telemetry receiver** and automatically opens `http://localhost:8765/live_map.html` in your default browser.
+2. **Open the Phone Bridge in Chrome:** The terminal prints your local Wi-Fi IP address (e.g., `http://192.168.1.x:8765/phone_bridge.html`). Open it in Chrome on your phone.
+3. Satellite GPS tracking begins automatically with the Chrome Screen Wake Lock active.
 4. *(Optional)* Tap **"Link Smartwatch BLE"** to stream live pulse and step counts.
 5. **Send Text to Watch Screen:** Type any message in the console or live map dashboard to pop it up on the watch face.
+
+> [!NOTE]
+> For Chrome Mobile permissions and Secure Context settings, see the [Chrome Mobile Configuration Guide](docs/telemetry-gps/README.md#chrome-mobile-configuration-site-permissions--secure-context).
 
 ---
 
 ## CLI Reference
 
 ```
-usage: watchgesture [-h] {run,scan,sniff,buzz,simulate,snoop-extract,profiles,gui,telemetry,telemetry-send} ...
+usage: openwrist [-h] {run,scan,sniff,buzz,simulate,snoop-extract,profiles,gui,telemetry,telemetry-send} ...
 
 Subcommands:
   run             Run the background gesture controller daemon
@@ -208,7 +211,7 @@ Subcommands:
 
 ## Testing
 
-WatchGesture includes a zero-dependency, comprehensive unit test suite:
+OpenWrist includes a zero-dependency, comprehensive unit test suite:
 
 ```powershell
 python -m unittest discover tests
@@ -216,21 +219,21 @@ python -m unittest discover tests
 
 **Results:**
 ```text
-....................................
+.....................................
 ----------------------------------------------------------------------
-Ran 36 tests in 0.008s
+Ran 37 tests in 0.010s
 
 OK
 ```
 
-All 36 tests run in under 10 milliseconds with zero network or mock dependencies.
+All 37 tests run in under 15 milliseconds with zero network or mock dependencies.
 
 ---
 
 ## Project Structure
 
 ```
-watchgesture/
+OpenWrist/
 ├── .github/
 │   ├── workflows/ci.yml           # Cross-platform matrix test workflow (Win/macOS/Ubuntu)
 │   ├── ISSUE_TEMPLATE/            # Bug report and device request templates
@@ -265,7 +268,7 @@ watchgesture/
 │       │   └── win32.py           # Driver-level Win32 hardware virtual key injection
 │       ├── cli.py                 # Multi-command CLI argument parser
 │       └── config.py              # Persistent user configuration management
-├── tests/                         # Complete 36-test suite
+├── tests/                         # Complete 37-test suite
 ├── config.example.json            # Public configuration template
 ├── pyproject.toml                 # PEP 621 packaging standard
 └── run.py                         # Unified 1-click launcher
