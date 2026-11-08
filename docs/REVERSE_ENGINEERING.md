@@ -13,7 +13,9 @@ A comprehensive, ground-up guide to reverse-engineering Bluetooth Low Energy (BL
 5. [The Accelerometer Breakthrough (Opcode 0x66)](#5-the-accelerometer-breakthrough-opcode-0x66)
 6. [Live Probing with Python & Bleak](#6-live-probing-with-python--bleak)
 7. [Mapping New Opcodes & Payload Layouts](#7-mapping-new-opcodes--payload-layouts)
-8. [Common Pitfalls & Protocol Nuances](#8-common-pitfalls--protocol-nuances)
+8. [Master Opcode Reference Table](#8-master-opcode-reference-table)
+9. [How to Reverse-Engineer Your Own Smartwatch (Universal Cookbook)](#9-how-to-reverse-engineer-your-own-smartwatch-universal-cookbook)
+10. [Common Pitfalls & Protocol Nuances](#10-common-pitfalls--protocol-nuances)
 
 ---
 
@@ -220,7 +222,100 @@ When the phone sends notifications to the watch:
 
 ---
 
-## 8. Common Pitfalls & Protocol Nuances
+## 8. Master Opcode Reference Table
+
+Authoritative table of reverse-engineered binary commands across the MoYoung / DaFit / Fire-Boltt protocol family:
+
+| Opcode (Hex) | Dec | Pipe | Direction | Description & Payload Layout |
+|:---:|:---:|:---:|:---:|---|
+| `0x66` | 102 | `FEE2` | Out $\to$ Watch | **Arm Camera/G-Sensor:** `{0x01}` arms accelerometer interrupt. Keepalive heartbeat sent every 6.0s. |
+| `0x66` | 102 | `FEE3` | In $\gets$ Watch | **Wrist Flick / Shutter Event:** Emitted when accelerometer detects sharp wrist snap. Payload: `{}` or `{0x01}`. |
+| `0x53` | 83 | `FEE2` | Out $\to$ Watch | **Return Home / Fast Abort:** `{}` forces watch to home screen, cancelling the 1.4s shutter animation. |
+| `0x67` | 103 | `FEE3` | In $\gets$ Watch | **Touch Screen Media Button:** Emitted when user taps media controls on watch screen. Payload `[0]`: `0` Play/Pause, `1` Prev, `2` Next, `3` Drop Call, `4` Vol+, `5` Vol-. |
+| `0x61` | 97 | `FEE2` | Out $\to$ Watch | **Find Watch / Buzz:** `{}` causes the smartwatch vibration motor to buzz immediately. |
+| `0x62` | 98 | `FEE3` | In $\gets$ Watch | **Find Phone Toggle:** Watch triggers phone alert. Incoming `{0x00}` start, `{!=0}` stop. |
+| `0x52` | 82 | `FEE2` | Out $\to$ Watch | **Calibrate G-Sensor:** `{}` commands watch to zero and recalibrate its 3-axis accelerometer. |
+| `0x41` | 65 | `FEE2` | Out $\to$ Watch | **Push Screen Message:** `[type: 1B] + "Title:Body"` (UTF-8). Pops up notification dialog on watch face. |
+| `0x44` | 68 | `FEE2` | Out $\to$ Watch | **Now Playing Music Info:** `[0x00] + "Track - Artist"` (UTF-8). Injects track name onto music player view. |
+| `0x7B` | 123 | `FEE2` | Out $\to$ Watch | **Set Music Playback State:** `{0x01}` playing, `{0x00}` paused. |
+| `0x31` | 49 | `FEE2` | Out $\to$ Watch | **Synchronize Time:** 4-byte big-endian epoch + `{0x08}` (hardcoded GMT+8 internally). |
+| `0x43` | 67 | `FEE2` | Out $\to$ Watch | **Inject Today's Weather:** `[0x00, condition, temp_c] + lunar(8B) + city(8B)`. |
+| `0x18` | 24 | `FEE2` | Out $\to$ Watch | **Raise to Wake Toggle:** `{0x01}` enable, `{0x00}` disable. |
+| `0x28` | 40 | `FEE2` | In/Out | **Query Raise to Wake State:** Returns `{0x01}` or `{0x00}`. |
+| `0x6D` | 109 | `FEE2` | Out $\to$ Watch | **Measure Heart Rate:** `{0x00}` start, `{0xFF}` stop. Responds with `{bpm}` byte. |
+| `0x6B` | 107 | `FEE2` | Out $\to$ Watch | **Measure Blood Oxygen (SpO2):** `{0x00}` start, `{0xFF}` stop. Responds with `{% SpO2}`. |
+| `0x69` | 105 | `FEE2` | Out $\to$ Watch | **Measure Blood Pressure:** `{0x00, 0x00, 0x00}` start. Responds with `{sys, dia}`. |
+| `0x68` | 104 | `FEE2` | Out $\to$ Watch | **Dynamic Heart Rate Stream:** `{0x00}` start continuous optical sensor measurement. |
+| `0x16` | 22 | `FEE2` | Out $\to$ Watch | **Set Step Goal:** 4-byte big-endian target steps integer. |
+| `0x51` | 81 | `FEE2` | Out $\to$ Watch | **Shutdown Device:** `{0xFF}` powers watch off completely. |
+
+---
+
+## 9. How to Reverse-Engineer Your Own Smartwatch (Universal Cookbook)
+
+If you have a different smartwatch (e.g. from BoAt, Noise, Amazfit, Colmi, Zeblaze, or a generic Nordic / Goodix device), you can adapt WatchGesture by following this universal 6-step cookbook:
+
+### Step 1: Identify the SoC Family & Companion App
+Look at the companion app mentioned in the smartwatch manual:
+- **Da Fit / MoYoung:** Realtek RTL8762 series SoC. Uses `0xFEEA` service family. (Fully compatible with WatchGesture out of the box).
+- **GloryFit:** Realtek or Dialog DA1469x SoC. Usually uses vendor service `0000fee7-...` or custom 128-bit UUID.
+- **FitCloudPro:** Realtek or Goodix GR5515 SoC. Uses service `0000fee7-...` with fixed-header byte framing.
+- **Zepp Life / Amazfit:** Dialog / Ambiq Micro SoC. Uses standard 16-bit UUIDs with protobuf/crypto framing.
+
+### Step 2: Extract the BTSnoop Log (Zero-Hardware Capture)
+1. Enable **Developer Options** on your Android smartphone.
+2. Toggle on **Enable Bluetooth HCI snoop log**.
+3. Toggle Bluetooth off and on.
+4. Open the watch's companion app and perform specific, isolated actions:
+   - *Action A:* Open the **Camera Remote** feature in the app.
+   - *Action B:* Shake the watch to take a picture.
+   - *Action C:* Press "Find My Watch".
+   - *Action D:* Open the Music Player and press Next Track.
+5. Plug the phone into your PC via USB and dump the bugreport:
+   ```powershell
+   adb bugreport bugreport.zip
+   ```
+6. Extract the PCAP with WatchGesture's built-in parser:
+   ```powershell
+   python run.py snoop-extract bugreport.txt -o my_watch.pcap
+   ```
+
+### Step 3: Isolate GATT Characteristics in Wireshark
+Open `my_watch.pcap` in Wireshark and apply the display filter:
+```wireshark
+btatt.opcode == 0x12 || btatt.opcode == 0x1b || btatt.opcode == 0x52
+```
+Look for:
+1. **The Write Pipe (`btatt.opcode == 0x12` or `0x52`):** Note the attribute handle (e.g. `0x0014`) and UUID (e.g. `FEE2`). This is where the phone sends commands.
+2. **The Notification Pipe (`btatt.opcode == 0x1b`):** Note the attribute handle (e.g. `0x0017`) and UUID (e.g. `FEE3`). This is where the watch fires events when you snap your wrist or tap media buttons.
+
+### Step 4: Decode Framing & Accelerometer Trigger
+Compare the packets captured when you opened camera mode vs when you took a picture:
+1. **Camera Open Packet:** Find the packet the phone wrote to the write handle when opening camera view. On DaFit, this was `FE EA 20 06 66 01`.
+2. **Wrist Flick Notification:** Find the notification that fired when you snapped your wrist. On DaFit, this was `FE EA 20 05 66`.
+3. **Magic Bytes:** Notice the prefix (e.g. `FE EA`). If your watch uses a different prefix (e.g. `AB CD` or `EA 01`), that is your watch's protocol identifier.
+
+### Step 5: Implement a Custom Driver in WatchGesture
+Creating a driver for a new watch family requires less than 30 lines of Python. Add your definitions to `src/watchgesture/core/protocol.py`:
+
+```python
+# Custom Smartwatch Driver Example
+MY_WATCH_SERVICE = "0000fee7-0000-1000-8000-00805f9b34fb"
+MY_CHAR_WRITE = "0000fee8-0000-1000-8000-00805f9b34fb"
+MY_CHAR_NOTIFY = "0000fee9-0000-1000-8000-00805f9b34fb"
+
+def make_my_watch_arm_packet() -> bytes:
+    # Build your custom magic header + arm opcode
+    return bytes([0xAB, 0xCD, 0x01, 0x66])
+
+def is_my_watch_flick(data: bytes) -> bool:
+    # Check if notification matches your wrist flick opcode
+    return len(data) >= 4 and data[0] == 0xAB and data[3] == 0x66
+```
+
+---
+
+## 10. Common Pitfalls & Protocol Nuances
 
 1. **BLE Central Contention:**
    Smartwatches can only maintain a single active BLE connection. If your phone's Bluetooth is connected to the watch, your PC will get an `Access Denied` or `Device Not Found` error. Always toggle off phone Bluetooth before connecting from desktop.

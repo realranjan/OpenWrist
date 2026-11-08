@@ -156,3 +156,4 @@ class TelemetryReceiver:
                 if self._running:
                     logger.debug("Telemetry stream reconnecting in 2s: %s", stream_err)
                     time.sleep(2.0)
+

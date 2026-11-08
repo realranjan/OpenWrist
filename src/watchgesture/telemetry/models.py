@@ -111,3 +111,4 @@ class TelemetryConfig:
     sync_interval_sec: int = 5
     server_port: int = 8765
     server_host: str = "127.0.0.1"
+

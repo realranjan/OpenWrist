@@ -9,238 +9,172 @@
   <a href="#requirements"><img src="https://img.shields.io/badge/Python-3.9%2B-38bdf8?style=flat-square&logo=python&logoColor=white" alt="Python Version" /></a>
   <a href="#architecture"><img src="https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-818cf8?style=flat-square&logo=windows&logoColor=white" alt="Platform" /></a>
   <a href="#protocol"><img src="https://img.shields.io/badge/Protocol-DaFit%20%2F%20Fire--Boltt%20V2-c084fc?style=flat-square" alt="Protocol" /></a>
-  <a href="#testing"><img src="https://img.shields.io/badge/Tests-30%2F30%20Passing-34d399?style=flat-square" alt="Tests" /></a>
+  <a href="#testing"><img src="https://img.shields.io/badge/Tests-36%2F36%20Passing-34d399?style=flat-square" alt="Tests" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="License" /></a>
 </p>
 
 ---
 
-**WatchGesture** is a high-performance, modular Bluetooth Low Energy (BLE) gesture controller that turns smartwatches (Fire-Boltt 184, DaFit, Moyoung, and Realtek RTL8762 chipset variants) into hands-free input controllers for desktop media and applications.
+**WatchGesture** is an open-source, production-grade smartwatch reverse-engineering toolkit and automation suite for consumer Bluetooth Low Energy (BLE) smartwatches (Fire-Boltt, DaFit, MoYoung, Colmi, Zeblaze, and Realtek RTL8762 chipset variants).
 
-By reverse-engineering the watch's internal GATT camera-shutter mode (`0x66` on vendor service `0xFEEA`), WatchGesture keeps the watch's 3-axis accelerometer streaming and translates wrist flicks into simulated keyboard and media actions with sub-millisecond response latency.
+It turns sub-\$50 smartwatches into **hands-free desktop wrist gesture controllers** and **live satellite GPS & biometric tracking beacons** with zero mobile app installs and zero hardware dongles.
 
 ---
 
-## Table of Contents
+## 📚 Dedicated Documentation Guides
 
-- [Features](#features)
-- [System Architecture](#system-architecture)
-- [Gesture Timing & State Machine](#gesture-timing--state-machine)
-- [Reverse-Engineering the Protocol](#reverse-engineering-the-protocol)
-- [Gesture Profiles](#gesture-profiles)
-- [Quick Start](#quick-start)
-- [CLI Reference](#cli-reference)
-- [Graphical User Interface (GUI)](#graphical-user-interface-gui)
-- [Project Structure](#project-structure)
-- [Testing](#testing)
-- [Troubleshooting & FAQ](#troubleshooting--faq)
-- [License](#license)
+| Guide | Description | Target Subsystem |
+|---|---|---|
+| 🎮 [**Wrist Gesture Controller Guide**](docs/gesture-control/README.md) | In-depth manual covering FSM timing, multi-snap debounce, profiles, Win32 hardware key injection, and the fast 0x53 re-arm trick. | [`docs/gesture-control/`](docs/gesture-control/) |
+| 🛰️ [**Satellite GPS & Telemetry Guide**](docs/telemetry-gps/README.md) | Complete guide on the zero-tap mobile bridge, Web Bluetooth heart-rate/steps streaming, live satellite HUD, and bi-directional text push. | [`docs/telemetry-gps/`](docs/telemetry-gps/) |
+| 🔬 [**Reverse-Engineering Masterclass & Cookbook**](docs/REVERSE_ENGINEERING.md) | Exhaustive guide on extracting Android BTSnoop logs without hardware sniffers, Wireshark filters, opcode tables, and a universal cookbook to reverse-engineer your own watch. | [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) |
+
+---
+
+## ⚡ Dual-Pillar Architecture
+
+WatchGesture provides two distinct, modular operating modes:
+
+```
+                                  ┌────────────────────────┐
+                                  │ ⌚ Smartwatch (BLE 5.0)│
+                                  │ Realtek RTL8762 / DaFit│
+                                  └───────────┬────────────┘
+                                              │
+                      ┌───────────────────────┴───────────────────────┐
+                      ▼                                               ▼
+          [Pillar 1: Direct BLE]                           [Pillar 2: Mobile Gateway]
+       Desktop Wrist Controller                         Satellite GPS & Telemetry Hub
+ ┌────────────────────────────────────┐             ┌────────────────────────────────────┐
+ │ • Opcode 0x66 Accelerometer Arming │             │ • Phone Bridge (HTML5 Geolocation) │
+ │ • 6.0s Watchdog Heartbeat Loop     │             │ • Web Bluetooth (0x180D & 0xFEE1)  │
+ │ • Sliding-Window FSM (1.00s window)│             │ • 5-Second Cloud PubSub Relay      │
+ │ • Direct Win32 / PyAutoGUI Keys    │             │ • Interactive Satellite Map HUD    │
+ │ • Desktop Dark-Theme GUI & Radar   │             │ • Push Text to Watch (Opcode 0x41) │
+ └────────────────────────────────────┘             └────────────────────────────────────┘
+```
+
+<p align="center">
+  <img src="docs/assets/architecture.svg" alt="Gesture Architecture Diagram" width="49%" />
+  <img src="docs/assets/telemetry_architecture.svg" alt="Telemetry Architecture Diagram" width="49%" />
+</p>
 
 ---
 
 ## Features
 
-- **Hands-Free Desktop Control:** Scroll vertical media (Instagram Reels, YouTube Shorts, TikTok) without touching mouse or keyboard.
+- **Hands-Free Desktop Navigation:** Scroll vertical media (Instagram Reels, YouTube Shorts, TikTok, slide presentations) using natural wrist snaps.
 - **Sliding-Window Gesture Engine:** Collects and classifies single, double, and triple flicks with customizable window duration (`1.00s`), debounce gap (`0.28s`), and lockout cooldown (`0.40s`).
-- **Instant Boss Key (`Win + D`):** 3 rapid flicks bypass the timing window and fire instantly to minimize work applications.
-- **Auto-Discovery BLE Scanner:** Detects and flags supported smartwatches nearby—no manual MAC address guessing required.
-- **Modular Profile Matrix:** Seamlessly switch between built-in profiles (Reels, YouTube Shorts, Media Player, Keynote/Presentations, Document Reader) or define custom key combinations.
-- **Dual Input Backends:** Dispatches simulated inputs via PyAutoGUI and direct native Win32 hardware virtual keys (`user32.keybd_event`) for full-screen game and browser compatibility.
-- **Linear/Stripe-Grade GUI:** Modern dark-theme desktop interface with live gesture radar, countdown progress ring, device pairing, and real-time telemetry log.
+- **Instant Boss Key (`Win + D`):** 3 rapid flicks bypass the timer window and minimize active windows immediately.
+- **Zero-Tap Satellite GPS Telemetry:** Streams real-time phone GNSS coordinates ($\pm 3\text{m}$) alongside watch pulse (BPM) and pedometer steps every 5 seconds.
+- **Bi-directional Push Messaging:** Push arbitrary notifications directly onto the watch face (Opcode `0x41`).
+- **Universal Smartwatch Scanner:** Automatically identifies candidate smartwatches nearby—no manual MAC address guessing required.
+- **Dual Input Backends:** Native Win32 driver-level hardware key injection (`user32.keybd_event`) alongside cross-platform PyAutoGUI fallbacks.
+- **Stripe/Linear-Grade GUI:** Modern dark-theme desktop dashboard with live gesture radar, countdown ring, device pairing, and calibration sliders.
 
 ---
 
-## System Architecture
+## Master Opcode Reference Table
 
-<p align="center">
-  <img src="docs/assets/architecture.svg" alt="System Architecture Diagram" width="100%" />
-</p>
+The Fire-Boltt 184 and compatible DaFit/Moyoung watches implement a proprietary binary protocol over vendor GATT service `0000feea-0000-1000-8000-00805f9b34fb`:
 
-```mermaid
-flowchart LR
-    subgraph Watch ["⌚ Smartwatch (Peripheral)"]
-        ACCEL["3-Axis G-Sensor"] --> FIRMWARE["Shutter Mode (0x66)"]
-        FIRMWARE --> GATT["BLE GATT Service 0xFEEA"]
-    end
-
-    subgraph Transport ["📡 Bluetooth LE Transport"]
-        GATT -- "Heartbeat (FEE2 6s)" --- BLEAK["BleakClient Async Loop"]
-        GATT -- "Flick Events (FEE3)" --> DECODER["V2 Protocol Parser"]
-    end
-
-    subgraph Engine ["⚙️ WatchGesture Engine"]
-        DECODER --> FSM["Gesture State Machine"]
-        FSM --> DEBOUNCE["Debounce Filter (0.28s)"]
-        DEBOUNCE --> WINDOW["Sliding Window (1.00s)"]
-        WINDOW --> DISPATCHER["Action Dispatcher"]
-    end
-
-    subgraph OS ["🖥️ Windows OS & Target Apps"]
-        DISPATCHER --> WIN32["Win32 Input / PyAutoGUI"]
-        WIN32 --> APP["Instagram Reels / Chrome / Spotify"]
-    end
-```
-
-The system operates across three decoupled layers:
-1. **Peripheral Layer:** The smartwatch firmware arms its accelerometer upon receiving command `0x66` on characteristic `FEE2`. When physical wrist acceleration exceeds the firmware's internal threshold, the watch emits an event on notify pipe `FEE3`.
-2. **Core Engine Layer:** An asynchronous `BleakClient` worker writes a heartbeat every 6 seconds to prevent the watch from returning to sleep. Incoming notifications are parsed, debounced against arm vibrations, and accumulated in a sliding window.
-3. **Execution Layer:** Completed gestures are dispatched to active application windows via PyAutoGUI and native Win32 `keybd_event` calls.
-
----
-
-## Gesture Timing & State Machine
-
-<p align="center">
-  <img src="docs/assets/state_machine.svg" alt="Gesture State Machine Diagram" width="100%" />
-</p>
-
-Physical wrist movements produce residual vibrations ("rebound wobble") after the initial snap. WatchGesture solves false multi-triggers using a deterministic 3-phase finite-state machine:
-
-| Parameter | Default | Purpose |
-|---|---:|---|
-| `gesture_window_sec` | `1.00s` | Time window opened on the first flick to accumulate additional flicks. |
-| `min_gap_sec` | `0.28s` | Minimum required physical spacing between flicks. Discards wrist rebound. |
-| `lockout_duration_sec` | `0.40s` | Post-action cooldown during which all G-sensor events are ignored. |
-
-### Evaluation Rules:
-- **1 Flick:** Window opens at $T=0$. If no further flicks arrive before $T=1.00\text{s}$, the single-flick action (`Down / Next Reel`) executes, followed by a $0.40\text{s}$ lockout.
-- **2 Flicks:** Second flick arrives at $T \ge 0.28\text{s}$ and $T < 1.00\text{s}$. At $T=1.00\text{s}$, the double-flick action (`Up / Previous Reel`) executes.
-- **3 Flicks (Instant Trigger):** Third flick arrives before window expiration. The engine triggers the Boss Key (`Win + D`) immediately without waiting for the timer to expire.
-
----
-
-## Reverse-Engineering the Protocol
-
-<p align="center">
-  <img src="docs/assets/protocol_framing.svg" alt="Protocol Framing Diagram" width="100%" />
-</p>
-
-The Fire-Boltt 184 and compatible DaFit/Moyoung watches implement a proprietary binary protocol over vendor service UUID `0000feea-0000-1000-8000-00805f9b34fb`.
+| Opcode | Pipe | Direction | Function | Payload Structure |
+|:---:|:---:|:---:|---|---|
+| `0x66` (102) | `FEE2` | Out $\to$ Watch | **Arm Camera/G-Sensor** | `{0x01}` arms sensor interrupt. 6s keepalive prevents sleep. |
+| `0x66` (102) | `FEE3` | In $\gets$ Watch | **Wrist Flick Event** | Emitted when accelerometer registers sharp wrist snap. |
+| `0x53` (83) | `FEE2` | Out $\to$ Watch | **Return Home / Fast Abort** | `{}` cancels 1.4s shutter animation for sub-second rapid flicks. |
+| `0x67` (103) | `FEE3` | In $\gets$ Watch | **Watch Touch Media Keys** | Touch media events: `0` Play/Pause, `1` Prev, `2` Next, `4` Vol+, `5` Vol-. |
+| `0x61` (97) | `FEE2` | Out $\to$ Watch | **Find Watch / Buzz** | `{}` causes physical watch vibration motor to buzz. |
+| `0x62` (98) | `FEE3` | In $\gets$ Watch | **Find Phone Toggle** | Watch-initiated phone alert. Incoming `{0x00}` start, `{!=0}` stop. |
+| `0x52` (82) | `FEE2` | Out $\to$ Watch | **Calibrate Accelerometer** | `{}` zeroes and recalibrates watch 3-axis accelerometer. |
+| `0x41` (65) | `FEE2` | Out $\to$ Watch | **Push Screen Message** | `[type: 1B] + "Title:Body"` (UTF-8). Injects dialog onto watch face. |
+| `0x44` (68) | `FEE2` | Out $\to$ Watch | **Now Playing Music Info** | `[0x00] + "Track - Artist"`. Displays track metadata on watch. |
+| `0x31` (49) | `FEE2` | Out $\to$ Watch | **Synchronize Time** | 4-byte big-endian epoch + `{0x08}` (hardcoded GMT+8 internally). |
+| `0x43` (67) | `FEE2` | Out $\to$ Watch | **Inject Today's Weather** | `[0x00, condition, temp_c] + lunar(8B) + city(8B)`. |
+| `0x18` (24) | `FEE2` | Out $\to$ Watch | **Raise to Wake Toggle** | `{0x01}` enable, `{0x00}` disable. |
+| `0x68` (104) | `FEE2` | Out $\to$ Watch | **Dynamic HR Stream** | `{0x00}` starts continuous optical heart-rate sensor streaming. |
 
 > [!TIP]
-> **Complete Reverse-Engineering Guide Available:**
-> For an in-depth, step-by-step masterclass covering Android Bluetooth HCI snoop extraction without hardware dongles, Wireshark display filters, packet deconstruction, and how the G-sensor shutter interrupt was discovered, read the [Reverse-Engineering Master Guide](docs/REVERSE_ENGINEERING.md).
-
-### GATT Characteristics
-
-| UUID | Handle | Properties | Role in WatchGesture |
-|---|---|---|---|
-| `0000fee2-0000-1000-8000-00805f9b34fb` | `FEE2` | `WRITE_WITHOUT_RESPONSE` | Control write pipe (heartbeats, mode arming, buzz, calibrate) |
-| `0000fee3-0000-1000-8000-00805f9b34fb` | `FEE3` | `NOTIFY` | Sensor event notification pipe (wrist flicks, media buttons, find phone) |
-| `0000fee1-0000-1000-8000-00805f9b34fb` | `FEE1` | `READ / NOTIFY` | Live pedometer / steps data |
-| `0000fee6-0000-1000-8000-00805f9b34fb` | `FEE6` | `WRITE_WITHOUT_RESPONSE` | Bulk data pipe (watch face assets, chunk transfers) |
-| `00002a19-0000-1000-8000-00805f9b34fb` | `2A19` | `READ / NOTIFY` | Standard BLE Battery Level |
-| `00002a29-0000-1000-8000-00805f9b34fb` | `2A29` | `READ` | Manufacturer Name (`MOYOUNG-V2`) |
-
-### Packet Structure (V1 & V2 Framing)
-
-All frames start with magic header `0xFE 0xEA`:
-
-```
-+------------+------------+--------------------+------------+------------+--------------------+
-|   Byte 0   |   Byte 1   |       Byte 2       |   Byte 3   |   Byte 4   |     Byte 5..N      |
-+------------+------------+--------------------+------------+------------+--------------------+
-|    0xFE    |    0xEA    | 0x20 + (Total >> 8)| Total & FF |   Opcode   |  Payload (Optional)|
-+------------+------------+--------------------+------------+------------+--------------------+
-```
-
-- **Byte 0–1:** Protocol identifier (`0xFE 0xEA`).
-- **Byte 2:** Total length high byte tagged with mask `0x20` (or `0x10` if MTU=20).
-- **Byte 3:** Total length low byte ($5 + \text{len(payload)}$).
-- **Byte 4:** Command Opcode.
-- **Byte 5..N:** Variable length payload.
-
-### Authoritative MoYoung / DaFit Opcodes
-
-| Opcode | Hex | Direction | Description |
-|---|---|---|---|
-| `102` | `0x66` | Out / In | **Camera Shutter / G-Sensor**: Out arms sensor; In = wrist flick event |
-| `83` | `0x53` | Out / In | **Return Home**: Cancels shutter animation for rapid multi-taps |
-| `103` | `0x67` | In | **Watch Touch Media Controls**: Play/Pause (`0`), Next (`2`), Prev (`1`), Vol+ (`4`), Vol- (`5`) |
-| `98` | `0x62` | In | **Find Phone Trigger**: Sent when user taps "Find Phone" on watch screen |
-| `97` | `0x61` | Out | **Find Watch**: Commands the watch to vibrate / buzz |
-| `82` | `0x52` | Out | **Zero G-Sensor**: Calibrates the onboard 3-axis accelerometer |
-| `65` | `0x41` | Out | **Push Notification**: Pushes text message (`Title:Body`) to watch screen |
-| `68` | `0x44` | Out | **Media Info**: Pushes track title and artist string to watch display |
-| `24` | `0x18` | Out | **Quick View**: Enables (`0x01`) or disables (`0x00`) Raise-to-Wake |
-
-### Ground-Truth Packets
-
-```bash
-# Keepalive Heartbeat (Write to FEE2 every 6s):
-FE EA 20 06 66 01
-
-# Wrist Flick Notification (Received on FEE3):
-FE EA 20 06 66 01
-
-# Fast Shutter Animation Cancel (Write to FEE2):
-FE EA 20 05 53
-
-# Quick-View / Raise-To-Wake Enable (Write to FEE2):
-FE EA 20 06 18 01
-```
+> **Reverse-Engineering Your Own Smartwatch:**
+> Want to adapt WatchGesture for another brand (BoAt, Noise, Amazfit, Colmi)? Read the step-by-step [Universal Reverse-Engineering Cookbook](docs/REVERSE_ENGINEERING.md#9-how-to-reverse-engineer-your-own-smartwatch-universal-cookbook).
 
 ---
 
-## Gesture Profiles
+## Quickstart
 
-WatchGesture includes predefined profiles tuned for popular applications:
-
-| Profile ID | Profile Name | 1 Flick (1.0s) | 2 Flicks (1.0s) | 3 Flicks (Instant) |
-|---|---|---|---|---|
-| `reels` *(Default)* | Instagram Reels | 👇 Scroll Down (`down`) | 👆 Scroll Up (`up`) | 🛡️ Boss Key (`win + d`) |
-| `youtube_shorts` | YouTube Shorts / TikTok | 👇 Next Video (`down`) | 👆 Prev Video (`up`) | 🔇 Mute / Unmute (`m`) |
-| `media` | Media Player & Spotify | ⏯️ Play / Pause (`space`) | ⏭️ Next Track (`nexttrack`) | 🔇 System Mute (`volumemute`) |
-| `presentation` | Keynote & Slides | 👉 Next Slide (`right`) | 👈 Prev Slide (`left`) | ⬛ Blank Screen (`b`) |
-| `reading` | Long Document Reader | 📄 Page Down (`pagedown`) | 📃 Page Up (`pageup`) | 🔝 Jump to Top (`home`) |
-
----
-
-## Quick Start
-
-### 1. Requirements
-
-- **OS:** Windows 10 or 11 with Bluetooth 4.0+ BLE hardware.
-- **Python:** Python 3.9, 3.10, 3.11, or 3.12.
-- **Hardware:** Fire-Boltt 184 (or DaFit / Moyoung compatible smartwatch).
-
-### 2. Installation
-
-Clone the repository and install dependencies:
-
+### 1. Installation
+Clone the repository and install in editable mode:
 ```powershell
-# Navigate into the project folder
-cd "c:\personel projects\ble\watchgesture project"
-
-# Create a virtual environment (optional but recommended)
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-# Install dependencies
-pip install -r requirements.txt
+git clone https://github.com/<your-username>/watchgesture.git
+cd watchgesture
+pip install -e .
 ```
 
-### 3. Launching
-
-Launch the **Graphical Interface**:
+### 2. Discover Your Smartwatch
+Make sure your watch screen is awake, then scan:
 ```powershell
-python run.py
-```
-
-Or run directly from the command line:
-```powershell
-# Auto-detect smartwatch and run with Instagram Reels profile
-python run.py run
-
-# Scan for nearby smartwatches and print their MAC addresses
 python run.py scan
 ```
+Output:
+```text
+======================================================================
+   🔍 WATCHGESTURE - BLE DEVICE DISCOVERY SCANNER
+======================================================================
+Scanning for 6.0 seconds... Make sure watch screen is awake!
+
+DEVICE NAME                    MAC ADDRESS          RSSI       STATUS
+----------------------------------------------------------------------
+FireBoltt 184                  CE:E6:79:A9:BE:3B    -31 dBm    ✅ SMARTWATCH
+----------------------------------------------------------------------
+```
+
+### 3. Verify Connection with a Vibration Buzz
+```powershell
+python run.py buzz --mac "CE:E6:79:A9:BE:3B"
+```
+*Your watch will vibrate immediately.*
+
+---
+
+## Usage Modes
+
+### Mode A: Desktop Wrist Gesture Controller
+
+#### Option 1: Modern Desktop GUI
+```powershell
+python run.py gui
+```
+*Opens the desktop dashboard with live gesture radar, calibration sliders, and one-click buzz/calibrate triggers.*
+
+#### Option 2: Background Daemon
+```powershell
+python run.py run --profile reels
+```
+*Runs headless in the background. Flick downward once to go to the next reel, twice to go back, or three times to hide all windows.*
+
+#### Option 3: Local Simulation (No Watch Needed)
+```powershell
+python run.py simulate --flicks 1   # Dispatches [down]
+python run.py simulate --flicks 2   # Dispatches [up]
+python run.py simulate --flicks 3   # Dispatches [win + d]
+```
+
+---
+
+### Mode B: Real-Time GPS & Biometric Telemetry
+
+```powershell
+python run.py telemetry
+```
+1. **Starts the local telemetry receiver** and opens `http://localhost:8765/live_map.html` in your default browser.
+2. **Open the Phone Bridge:** Open `http://<your-pc-ip>:8765/phone_bridge.html` on your phone browser.
+3. Satellite GPS tracking begins automatically.
+4. *(Optional)* Tap **"Link Smartwatch BLE"** to stream live pulse and step counts.
+5. **Send Text to Watch Screen:** Type any message in the console or live map dashboard to pop it up on the watch face.
 
 ---
 
 ## CLI Reference
-
-The `watchgesture` command-line interface provides comprehensive tools for scanning, testing, and running controllers:
 
 ```
 usage: watchgesture [-h] {run,scan,sniff,buzz,simulate,snoop-extract,profiles,gui,telemetry,telemetry-send} ...
@@ -258,178 +192,84 @@ Subcommands:
   telemetry-send  Send a message to smartwatch screen via telemetry relay
 ```
 
-### Examples
+---
 
-**Simulate 1, 2, or 3 flicks locally without watch hardware:**
-```powershell
-python run.py simulate --flicks 1
-python run.py simulate --flicks 2
-python run.py simulate --flicks 3
-```
+## Built-in Gesture Profiles
 
-**Buzz the watch to test physical connection:**
-```powershell
-python run.py buzz --mac "CE:E6:79:A9:BE:3B"
-```
-
-**Extract BTSnoop pcap from Android bugreport:**
-```powershell
-python run.py snoop-extract bugreport.txt -o capture.pcap
-```
-
-**Scan for smartwatches:**
-```powershell
-python -m watchgesture scan --timeout 8.0
-```
+| Profile ID | Target Application | 1 Flick | 2 Flicks | 3 Flicks (Instant) |
+|---|---|---|---|---|
+| `reels` *(Default)* | Instagram Reels Web | 👇 `[down]` (Next Reel) | 👆 `[up]` (Prev Reel) | 🛡️ `[win + d]` (Boss Key) |
+| `youtube_shorts` | YouTube Shorts / TikTok | ⏭️ `[down]` (Next Short) | ⏮️ `[up]` (Prev Short) | 🛡️ `[win + d]` (Boss Key) |
+| `media` | Spotify / VLC / Netflix | ⏯️ `[playpause]` | ⏭️ `[nexttrack]` | 🔇 `[volumemute]` |
+| `presentation` | Keynote / PowerPoint | ➡️ `[right]` (Next Slide) | ⬅️ `[left]` (Prev Slide) | ⏹️ `[b]` (Blank Screen) |
+| `reading` | Kindle / PDF Viewer | 📄 `[pagedown]` | 📃 `[pageup]` | 🔝 `[home]` |
 
 ---
 
-## 🛰️ Real-Time GPS & Biometric Telemetry
+## Testing
 
-In addition to wrist gesture media control, WatchGesture includes a zero-tap **mobile telemetry bridge and desktop HUD**:
+WatchGesture includes a zero-dependency, comprehensive unit test suite:
 
-```mermaid
-flowchart LR
-    WATCH["⌚ Smartwatch (BLE)\nHeart Rate (0x180D)\nSteps (0xFEE1)"] -->|"Web Bluetooth"| PHONE["📱 Mobile Phone\nHigh-Accuracy GPS\nphone_bridge.html"]
-    PHONE -->|"HTTPS POST (Every 5s)"| CLOUD["☁️ Cloud Relay\nntfy.sh Stream"]
-    CLOUD -->|"SSE / JSON Stream"| LAPTOP["💻 Laptop / Desktop\nLive Map HUD (live_map.html)\npython run.py telemetry"]
-    LAPTOP -->|"Opcode 0x41 (Push Text)"| PHONE
-    PHONE -->|"FEE2 Write"| WATCH
-```
-
-### How to Use Telemetry:
-
-1. **Launch the Telemetry Receiver & HUD on PC:**
-   ```powershell
-   python run.py telemetry
-   ```
-   *Spins up a local HTTP server at `http://localhost:8765/live_map.html` and opens the live satellite dashboard.*
-
-2. **Open the Mobile Bridge on your Phone:**
-   - Open `http://<your-pc-ip>:8765/phone_bridge.html` on your phone browser.
-   - GPS satellite tracking starts **automatically** on page load with zero clicks.
-   - Tap **"Link Smartwatch BLE"** to stream live watch pulse (BPM) and pedometer steps.
-
-3. **Bi-directional Push Messaging:**
-   - Type any text message in the terminal or on the live map dashboard and press **Enter** to pop it up directly onto the watch screen (Opcode `0x41` / `CMD_SEND_MESSAGE`).
-   - Or push from the command line:
-     ```powershell
-     python run.py telemetry-send --message "Dinner is ready!"
-     ```
-
-**Run controller with specific MAC and Media profile:**
 ```powershell
-python -m watchgesture run --mac "CE:E6:79:A9:BE:3B" --profile media
+python -m unittest discover tests
 ```
 
-**Calibrate custom gesture window and gap:**
-```powershell
-python -m watchgesture run --window 1.20 --gap 0.32 --lockout 0.50
+**Results:**
+```text
+....................................
+----------------------------------------------------------------------
+Ran 36 tests in 0.008s
+
+OK
 ```
 
-**Sniff raw GATT notifications for protocol inspection:**
-```powershell
-python -m watchgesture sniff --mac "CE:E6:79:A9:BE:3B"
-```
-
----
-
-## Graphical User Interface (GUI)
-
-The WatchGesture GUI is built with modern dark tokens, responsive padding, and non-blocking asynchronous state processing:
-
-- **Live Gesture Radar:** Multi-tap step visualization that flashes action tiles when wrist flicks register.
-- **Countdown Window Bar:** High-precision visual progress bar showing remaining window time ($1.00\text{s} \to 0.00\text{s}$).
-- **Interactive Device Discovery:** 1-click BLE scanner automatically discovers nearby smartwatches and populates the target address field.
-- **Profile Selector:** Switch between Instagram Reels, YouTube Shorts, Spotify Media, and Keynote presentation modes on the fly.
-- **Live Event Log:** Timestamped, scrollable activity console for connection diagnostics.
-
-Run the GUI with:
-```powershell
-python -m watchgesture gui
-```
+All 36 tests run in under 10 milliseconds with zero network or mock dependencies.
 
 ---
 
 ## Project Structure
 
 ```
-watchgesture project/
-├── pyproject.toml                     # Modern PEP 621 package specification
-├── requirements.txt                   # Production dependencies (bleak, pyautogui)
-├── run.py                             # Root quick-launcher script
+watchgesture/
+├── .github/
+│   ├── workflows/ci.yml           # Cross-platform matrix test workflow (Win/macOS/Ubuntu)
+│   ├── ISSUE_TEMPLATE/            # Bug report and device request templates
+│   └── pull_request_template.md   # PR guidelines
 ├── docs/
-│   └── assets/
-│       ├── banner.svg                 # Project banner vector graphic
-│       ├── architecture.svg           # High-resolution architecture diagram
-│       ├── state_machine.svg          # Gesture timing & debounce state machine
-│       └── protocol_framing.svg       # DaFit V2 binary packet layout
+│   ├── assets/                    # Vector SVGs (banner, architecture, framing, FSM)
+│   ├── gesture-control/           # Dedicated Gesture Controller guide
+│   │   └── README.md
+│   ├── telemetry-gps/             # Dedicated Satellite Telemetry & HUD guide
+│   │   └── README.md
+│   └── REVERSE_ENGINEERING.md     # Protocol deconstruction & "How to do yours too"
 ├── src/
 │   └── watchgesture/
-│       ├── __init__.py                # Package exports and version metadata
-│       ├── __main__.py                # python -m watchgesture entrypoint
-│       ├── cli.py                     # Rich CLI parser and subcommands
-│       ├── config.py                  # JSON configuration and profile persistence
 │       ├── core/
-│       │   ├── client.py              # BleakClient GATT manager & heartbeat
-│       │   ├── dispatcher.py          # Input injector (PyAutoGUI & Win32 VK)
-│       │   ├── engine.py              # Gesture state machine (window, debounce, lockout)
-│       │   ├── protocol.py            # V2 packet encoder, decoder, opcodes
-│       │   └── scanner.py             # BLE device scanner with watch signature filter
+│       │   ├── client.py          # Asynchronous Bleak BLE client & keepalive worker
+│       │   ├── dispatcher.py      # Dual-backend input execution (Win32 & PyAutoGUI)
+│       │   ├── engine.py          # Finite-state machine (sliding window, debounce, lockout)
+│       │   ├── protocol.py        # V1/V2 packet builders, reassembler & opcode specs
+│       │   └── scanner.py         # BLE peripheral discovery and smartwatch matcher
 │       ├── gui/
-│       │   ├── __init__.py
-│       │   └── app.py                 # Tkinter dark-theme desktop application
+│       │   └── app.py             # Tkinter dark-theme GUI with live gesture radar
 │       ├── profiles/
-│       │   ├── __init__.py
-│       │   └── default_profiles.py    # Builtin profiles (Reels, Shorts, Media, Slides)
-│       └── utils/
-│           ├── __init__.py
-│           ├── snoop.py               # Android BTSnoop bugreport parser
-│           └── win32.py               # Win32 hardware keystroke injector
-└── tests/
-    ├── __init__.py
-    ├── test_config.py                 # Configuration persistence & profile tests
-    ├── test_dispatcher.py             # Action lookup and key dispatch tests
-    ├── test_engine.py                 # Timing window, debounce, and lockout tests
-    ├── test_protocol.py               # V2 packet framing, checksum, opcode tests
-    └── test_snoop.py                  # BTSnoop extraction and decoding tests
+│       │   └── default_profiles.py# Built-in profile mappings
+│       ├── telemetry/
+│       │   ├── models.py          # Strongly typed telemetry data models
+│       │   ├── server.py          # HTTP host and multi-threaded relay stream reader
+│       │   └── web/
+│       │       ├── live_map.html  # Desktop satellite map HUD & message pusher
+│       │       └── phone_bridge.html # Zero-tap mobile GPS & Web Bluetooth gateway
+│       ├── utils/
+│       │   ├── snoop.py           # Android BTSnoop/BTSnooz bugreport extractor
+│       │   └── win32.py           # Driver-level Win32 hardware virtual key injection
+│       ├── cli.py                 # Multi-command CLI argument parser
+│       └── config.py              # Persistent user configuration management
+├── tests/                         # Complete 36-test suite
+├── config.example.json            # Public configuration template
+├── pyproject.toml                 # PEP 621 packaging standard
+└── run.py                         # Unified 1-click launcher
 ```
-
----
-
-## Testing
-
-The project includes unit tests for protocol parsing, gesture state machine timing, configuration serialization, and input dispatching:
-
-```powershell
-# Run the complete test suite
-python -m unittest discover tests
-```
-
-Expected output:
-```
-..............................
-----------------------------------------------------------------------
-Ran 30 tests in 0.012s
-
-OK
-```
-
----
-
-## Troubleshooting & FAQ
-
-#### 1. Watch not found during scan or connection
-- Ensure the watch screen is **awake and unlocked** when initiating the connection.
-- Disconnect the official mobile companion app (DaFit) on your smartphone. Smartwatches can only maintain **one active BLE central connection** at a time.
-- If previously paired in Windows Settings, toggle your PC's Bluetooth off and back on.
-
-#### 2. Keystrokes are not registering in the browser
-- Click on the browser window (or directly on the Instagram Reel) so the browser document has active OS focus.
-- The default Reels profile sends `Down` and `Up` arrow keys, which Instagram uses for reel progression.
-
-#### 3. Single wrist flick triggers two actions
-- Your wrist movement may have had a severe rebound bounce. Increase the debounce threshold using `--gap 0.35` or calibrate `min_gap_sec` in `config.json`.
 
 ---
 

@@ -14,7 +14,8 @@ import sys
 import threading
 import time
 import tkinter as tk
-from tkinter import ttk, messagebox
+import webbrowser
+from tkinter import ttk, messagebox, simpledialog
 from typing import Any, Dict, List, Optional, Tuple
 
 from watchgesture.config import AppConfig
@@ -64,6 +65,8 @@ class WatchGestureApp:
         self._client: Optional[WatchGestureClient] = None
         self._is_connecting: bool = False
         self._is_connected: bool = False
+        self._telemetry_receiver: Optional[Any] = None
+        self._telemetry_port: int = 8765
 
         self._setup_styles()
         self._build_ui()
@@ -228,7 +231,56 @@ class WatchGestureApp:
             state="disabled",
             command=self._handle_zero_accel,
         )
-        self.btn_zero_accel.pack(side=tk.LEFT)
+        self.btn_zero_accel.pack(side=tk.LEFT, padx=(0, 8))
+
+        self.btn_send_msg = tk.Button(
+            conn_actions,
+            text="💬 Push Text",
+            font=(FONT_FAMILY, 8, "bold"),
+            fg=TEXT_MUTED,
+            bg=BG_CARD,
+            activebackground=BORDER,
+            activeforeground=TEXT_PRIMARY,
+            relief="flat",
+            padx=10,
+            pady=3,
+            cursor="hand2",
+            state="disabled",
+            command=self._handle_send_screen_msg,
+        )
+        self.btn_send_msg.pack(side=tk.LEFT, padx=(0, 8))
+
+        self.btn_telemetry = tk.Button(
+            conn_actions,
+            text="🛰️ Live Map HUD",
+            font=(FONT_FAMILY, 8, "bold"),
+            fg=TEXT_PRIMARY,
+            bg=BG_CARD,
+            activebackground=BORDER,
+            activeforeground=TEXT_PRIMARY,
+            relief="flat",
+            padx=10,
+            pady=3,
+            cursor="hand2",
+            command=self._handle_launch_telemetry,
+        )
+        self.btn_telemetry.pack(side=tk.LEFT, padx=(0, 8))
+
+        self.btn_bridge = tk.Button(
+            conn_actions,
+            text="📱 Phone Bridge",
+            font=(FONT_FAMILY, 8, "bold"),
+            fg=TEXT_PRIMARY,
+            bg=BG_CARD,
+            activebackground=BORDER,
+            activeforeground=TEXT_PRIMARY,
+            relief="flat",
+            padx=10,
+            pady=3,
+            cursor="hand2",
+            command=self._handle_open_bridge,
+        )
+        self.btn_bridge.pack(side=tk.LEFT)
 
         # 3. Profile & Mapping Card
         profile_card = tk.Frame(main_frame, bg=BG_PANEL, highlightbackground=BORDER, highlightthickness=1)
@@ -606,6 +658,7 @@ class WatchGestureApp:
                 self.btn_scan.config(state="disabled")
                 self.btn_buzz.config(state="normal", fg=TEXT_PRIMARY)
                 self.btn_zero_accel.config(state="normal", fg=TEXT_PRIMARY)
+                self.btn_send_msg.config(state="normal", fg=TEXT_PRIMARY)
             elif status in ("DISCONNECTED", "ERROR", "NOT_FOUND"):
                 self._is_connected = False
                 self._is_connecting = False
@@ -613,6 +666,7 @@ class WatchGestureApp:
                 self.btn_scan.config(state="normal")
                 self.btn_buzz.config(state="disabled", fg=TEXT_MUTED)
                 self.btn_zero_accel.config(state="disabled", fg=TEXT_MUTED)
+                self.btn_send_msg.config(state="disabled", fg=TEXT_MUTED)
 
         elif msg_type == "flick":
             count, time_left = data
@@ -662,6 +716,39 @@ class WatchGestureApp:
         if self._client and self._ble_loop and self._is_connected:
             asyncio.run_coroutine_threadsafe(self._client.calibrate_gsensor(), self._ble_loop)
             self._log("Sent G-Sensor calibration command (Opcode 0x52) to smartwatch.")
+
+    def _handle_send_screen_msg(self) -> None:
+        """Prompts for text and displays it directly on the smartwatch face (Opcode 0x41)."""
+        if not self._client or not self._ble_loop or not self._is_connected:
+            return
+        msg = simpledialog.askstring("Push Text to Watch", "Enter notification text to pop on watch screen:")
+        if msg and msg.strip():
+            asyncio.run_coroutine_threadsafe(
+                self._client.send_notification("PC", msg.strip()),
+                self._ble_loop,
+            )
+            self._log(f"Pushed on-screen notification: '{msg.strip()}' (Opcode 0x41)")
+
+    def _handle_launch_telemetry(self) -> None:
+        """Starts the local telemetry server and opens the live satellite map HUD."""
+        from watchgesture.telemetry import TelemetryConfig, TelemetryReceiver
+        if not self._telemetry_receiver:
+            config = TelemetryConfig(server_port=self._telemetry_port)
+            self._telemetry_receiver = TelemetryReceiver(config=config)
+            port = self._telemetry_receiver.start_http_server(open_browser=True)
+            self._telemetry_port = port
+            self._telemetry_receiver.start_listener()
+            self._log(f"Started Telemetry Receiver on port {port}. Live HUD opened in browser.")
+        else:
+            map_url = f"http://localhost:{self._telemetry_port}/live_map.html"
+            webbrowser.open(map_url)
+            self._log(f"Re-opened Telemetry Live Map HUD: {map_url}")
+
+    def _handle_open_bridge(self) -> None:
+        """Opens the mobile phone bridge web interface."""
+        bridge_url = f"http://localhost:{self._telemetry_port}/phone_bridge.html"
+        webbrowser.open(bridge_url)
+        self._log(f"Opened Mobile Phone Bridge interface: {bridge_url}")
 
     def _flash_tile(self, count: int, highlight_color: str = ACCENT_BLUE) -> None:
         """Temporarily highlights the gesture action card."""
